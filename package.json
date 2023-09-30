@@ -17,6 +17,8 @@
     "foundry:lint": "yarn workspace @se-2/foundry lint",
     "foundry:test": "yarn workspace @se-2/foundry test",
     "generate": "yarn workspace @se-2/foundry generate",
+    "lensapi:build": "yarn workspace phat-contract-starter-kit build-function",
+    "lensapi:watch": "yarn workspace phat-contract-starter-kit localhost-watch",
     "postinstall": "husky install",
     "next:check-types": "yarn workspace @se-2/nextjs check-types",
     "next:format": "yarn workspace @se-2/nextjs format",

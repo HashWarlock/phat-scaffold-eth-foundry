@@ -283,6 +283,31 @@ const contracts = {
                 {
                   indexed: false,
                   internalType: "uint256",
+                  name: "reqid",
+                  type: "uint256",
+                },
+                {
+                  indexed: false,
+                  internalType: "string",
+                  name: "greeting",
+                  type: "string",
+                },
+                {
+                  indexed: false,
+                  internalType: "string",
+                  name: "_lensApiData",
+                  type: "string",
+                },
+              ],
+              name: "LensApiDataReceived",
+              type: "event",
+            },
+            {
+              anonymous: false,
+              inputs: [
+                {
+                  indexed: false,
+                  internalType: "uint256",
                   name: "",
                   type: "uint256",
                 },
@@ -333,7 +358,7 @@ const contracts = {
                 {
                   indexed: false,
                   internalType: "string",
-                  name: "randomness",
+                  name: "_lensApiData",
                   type: "string",
                 },
               ],
@@ -413,19 +438,6 @@ const contracts = {
                 },
               ],
               name: "RoleRevoked",
-              type: "event",
-            },
-            {
-              anonymous: false,
-              inputs: [
-                {
-                  indexed: false,
-                  internalType: "string",
-                  name: "randomness",
-                  type: "string",
-                },
-              ],
-              name: "WhoaOffchainRandomness",
               type: "event",
             },
             {
@@ -650,6 +662,19 @@ const contracts = {
                   internalType: "bool",
                   name: "",
                   type: "bool",
+                },
+              ],
+              stateMutability: "view",
+              type: "function",
+            },
+            {
+              inputs: [],
+              name: "lensApiData",
+              outputs: [
+                {
+                  internalType: "string",
+                  name: "",
+                  type: "string",
                 },
               ],
               stateMutability: "view",
@@ -925,19 +950,6 @@ const contracts = {
                   internalType: "uint32",
                   name: "",
                   type: "uint32",
-                },
-              ],
-              stateMutability: "view",
-              type: "function",
-            },
-            {
-              inputs: [],
-              name: "randomness",
-              outputs: [
-                {
-                  internalType: "string",
-                  name: "",
-                  type: "string",
                 },
               ],
               stateMutability: "view",

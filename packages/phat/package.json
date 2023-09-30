@@ -21,7 +21,7 @@
     "localhost-node": "hardhat node",
     "localhost-test": "hardhat test",
     "localhost-deploy": "hardhat run --network localhost ./scripts/localhost/deploy.ts",
-    "localhost-watch": "phat-fn watch",
+    "localhost-watch": "phat-fn watch 0x5FbDB2315678afecb367f032d93F642f64180aa3 ../foundry/out/YourContract.sol/YourContract.json ./dist/index.js -a https://api.lens.dev/",
     "localhost-push-request": "hardhat run --network localhost ./scripts/localhost/push-request.ts",
     "test-deploy-function": "phat-fn upload --coreSettings=https://api-mumbai.lens.dev/",
     "main-deploy-function": "phat-fn upload --mode=production --coreSettings=https://api.lens.dev/",

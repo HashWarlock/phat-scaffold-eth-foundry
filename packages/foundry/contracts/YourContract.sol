@@ -19,7 +19,7 @@ contract YourContract is PhatRollupAnchor {
     string public greeting = "Building Unstoppable Apps!!!";
     bool public premium = false;
     uint256 public totalCounter = 0;
-    string public randomness;
+    string public lensApiData;
     mapping(address => uint256) public userGreetingCounter;
 
     uint constant TYPE_RESPONSE = 0;
@@ -35,9 +35,9 @@ contract YourContract is PhatRollupAnchor {
         bool premium,
         uint256 value
     );
-    event ResponseReceived(uint reqId, string greeting, string randomness);
+    event ResponseReceived(uint reqId, string greeting, string _lensApiData);
     event ErrorReceived(uint reqId, string greeting, string error);
-    event WhoaOffchainRandomness(string randomness);
+    event LensApiDataReceived(uint reqid, string greeting, string _lensApiData);
 
     // Constructor: Called once on contract deployment
     // Check packages/foundry/deploy/Deploy.s.sol
@@ -71,7 +71,7 @@ contract YourContract is PhatRollupAnchor {
 
         uint id = nextRequest;
         requests[id] = _newGreeting;
-        _pushMessage(abi.encode(id, _newGreeting));
+        _pushMessage(abi.encode(id, "0x05"));
         nextRequest += 1;
 
         // msg.value: built-in global variable that represents the amount of ether sent with the transaction
@@ -105,19 +105,19 @@ contract YourContract is PhatRollupAnchor {
     function _onMessageReceived(bytes calldata action) internal override {
         // Optional to check length of action
         // require(action.length == 32 * 3, "cannot parse action");
-        (uint respType, uint id, string memory _randomness) = abi.decode(
+        (uint respType, uint id, string memory _lensApiData) = abi.decode(
             action,
             (uint, uint, string)
         );
         if (respType == TYPE_RESPONSE) {
-            emit ResponseReceived(id, requests[id], _randomness);
+            emit ResponseReceived(id, requests[id], _lensApiData);
             delete requests[id];
         } else if (respType == TYPE_ERROR) {
             emit ErrorReceived(id, requests[id], "ERROR");
             delete requests[id];
         }
-        emit WhoaOffchainRandomness(_randomness);
-        randomness = _randomness;
-        greeting = _randomness;
+        emit LensApiDataReceived(id, requests[id], _lensApiData);
+        lensApiData = _lensApiData;
+        greeting = _lensApiData;
     }
 }

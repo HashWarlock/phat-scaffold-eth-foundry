@@ -1,7 +1,59 @@
+// *** YOU ARE LIMITED TO THE FOLLOWING IMPORTS TO BUILD YOUR PHAT CONTRACT     ***
+// *** ADDING ANY IMPORTS WILL RESULT IN ERRORS & UPLOADING YOUR CODE TO PHALA  ***
+// *** NETWORK WILL FAIL. IF YOU WANT TO KNOW MORE, JOIN OUR DISCORD TO SPEAK   ***
+// *** WITH THE PHALA TEAM AT https://discord.gg/5HfmWQNX THANK YOU             ***
 import "@phala/pink-env";
 import { Coders } from "@phala/ethers";
 
 type HexString = `0x${string}`
+
+// ETH ABI Coders available
+/*
+// Basic Types
+// Encode uint
+const uintCoder = new Coders.NumberCoder(32, false, "uint256");
+// Encode Bytes
+const bytesCoder = new Coders.BytesCoder("bytes");
+// Encode String
+const stringCoder = new Coders.StringCoder("string");
+// Encode Address
+const addressCoder = new Coders.AddressCoder("address");
+
+// ARRAYS
+//
+// ***NOTE***
+// IF YOU DEFINE AN TYPED ARRAY FOR ENCODING, YOU MUST ALSO DEFINE THE SIZE WHEN DECODING THE ACTION REPLY IN YOUR
+// SOLIDITY SMART CONTRACT.
+// EXAMPLE for an array of string with a length of 10
+//
+// index.ts
+const stringCoder = new Coders.StringCoder("string");
+const stringArrayCoder = new Coders.ArrayCoder(stringCoder, 10, "string[]");
+function encodeReply(reply: [number, number, string[]]): HexString {
+  return Coders.encode([uintCoder, uintCoder, stringArrayCoder], reply) as HexString;
+}
+
+const stringArray = string[10];
+
+export default function main(request: HexString, settings: string): HexString {
+  return encodeReply([0, 1, stringArray]);
+}
+// OracleConsumerContract.sol
+function _onMessageReceived(bytes calldata action) internal override {
+    (uint respType, uint id, string[10] memory data) = abi.decode(
+        action,
+        (uint, uint, string[10])
+    );
+}
+// Encode Array of addresses with a length of 10
+const stringArrayCoder = new Coders.ArrayCoder(stringCoder, 10, "string");
+// Encode Array of addresses with a length of 10
+const addressArrayCoder = new Coders.ArrayCoder(addressCoder, 10, "address");
+// Encode Array of bytes with a length of 10
+const bytesArrayCoder = new Coders.ArrayCoder(bytesCoder, 10, "bytes");
+// Encode Array of uint with a length of 10
+const uintArrayCoder = new Coders.ArrayCoder(uintCoder, 10, "uint256");
+ */
 
 // eth abi coder
 const uintCoder = new Coders.NumberCoder(32, false, "uint256");
@@ -51,6 +103,59 @@ function stringToHex(str: string): string {
   return "0x" + hex;
 }
 
+function fetchLensApiStats(lensApi: string, profileId: string): any {
+  // profile_id should be like 0x0001
+  let headers = {
+    "Content-Type": "application/json",
+    "User-Agent": "phat-contract",
+  };
+  let query = JSON.stringify({
+    query: `query Profile {
+            profile(request: { profileId: \"${profileId}\" }) {
+                stats {
+                    totalFollowers
+                    totalFollowing
+                    totalPosts
+                    totalComments
+                    totalMirrors
+                    totalPublications
+                    totalCollects
+                }
+            }
+        }`,
+  });
+  let body = stringToHex(query);
+  //
+  // In Phat Function runtime, we not support async/await, you need use `pink.batchHttpRequest` to
+  // send http request. The function will return an array of response.
+  //
+  let response = pink.batchHttpRequest(
+      [
+        {
+          url: "https://api.lens.dev/",
+          method: "POST",
+          headers,
+          body,
+          returnTextBody: true,
+        },
+      ],
+      10000
+  )[0];
+  if (response.statusCode !== 200) {
+    console.log(
+        `Fail to read Lens api with status code: ${response.statusCode}, error: ${
+            response.error || response.body
+        }}`
+    );
+    throw Error.FailedToFetchData;
+  }
+  let respBody = response.body;
+  if (typeof respBody !== "string") {
+    throw Error.FailedToDecode;
+  }
+  return JSON.parse(respBody);
+}
+
 function parseProfileId(hexx: string): string {
   var hex = hexx.toString();
   if (!isHexString(hex)) {
@@ -65,73 +170,6 @@ function parseProfileId(hexx: string): string {
   return str;
 }
 
-function sendTGMessage(msg: string) {
-  const strMsg = JSON.stringify(msg)
-  console.log(strMsg.toString())
-  console.log(msg.toString())
-  const tg_bot_http_endpoint = `https://api.telegram.org/bot6365043287:AAGd0jeyMmv1W7FJ7K_12y_PgpTQ5qFjbXw/sendMessage?chat_id=-1001986190934&text=`;
-  let headers = {
-    "Content-Type": "application/json",
-    "User-Agent": "phat-contract",
-  };
-  const res3 = pink.httpRequest({
-    url: `${tg_bot_http_endpoint}\n${msg}`,
-    method: "POST",
-    headers,
-    returnTextBody: true,
-  });
-  console.info(res3);
-}
-
-function getDrandRandomness(drandHttpEndpoint: string): any {
-  let headers = {
-    "Content-Type": "application/json",
-    "User-Agent": "phat-contract",
-  };
-  const response = pink.httpRequest({
-    url: `${drandHttpEndpoint}chains`,
-    method: "GET",
-    headers,
-    returnTextBody: true,
-  });
-  console.info(response);
-  if (response.statusCode !== 200) {
-    console.log(
-        `Fail to read Lens api with status code: ${response.statusCode}, error: ${
-            response.body
-        }}`
-    );
-    throw Error.FailedToFetchData;
-  }
-  let respBody = response.body;
-
-  if (typeof respBody !== "string") {
-    throw Error.FailedToDecode;
-  }
-  let hi = JSON.parse(respBody);
-  console.log(`${hi}`);
-  let chains = [];
-  for (let chain of hi) {
-    console.log(chain)
-    chains.push({
-      url: `${drandHttpEndpoint}${chain}/public/latest`,
-      method: "GET",
-      headers,
-      returnTextBody: true,
-    });
-  }
-  let randoms = pink.batchHttpRequest(chains, 10000);
-  console.log(randoms)
-  let yo = []
-  for (let resp of randoms) {
-    if (typeof resp.body !== "string") {
-      throw Error.FailedToDecode;
-    }
-    yo.push(JSON.parse(resp.body));
-  }
-  return yo;
-}
-
 
 //
 // Here is what you need to implemented for Phat Function, you can customize your logic with
@@ -139,8 +177,8 @@ function getDrandRandomness(drandHttpEndpoint: string): any {
 //
 // The function will be called with two parameters:
 //
-// - request: The raw payload from the contract call `request` (check the `request` function in YourContract.sol).
-//            In this example, it's a tuple of two elements: [requestId, greeting]
+// - request: The raw payload from the contract call `request` (check the `request` function in TestLensApiConsumerConract.sol).
+//            In this example, it's a tuple of two elements: [requestId, profileId]
 // - settings: The custom settings you set with the `config_core` function of the Action Offchain Rollup Phat Contract. In
 //            this example, it just a simple text of the lens api url prefix.
 //
@@ -148,28 +186,30 @@ function getDrandRandomness(drandHttpEndpoint: string): any {
 // TestLensApiConsumerContract.sol for more details. We suggest a tuple of three elements: [successOrNotFlag, requestId, data] as
 // the return value.
 //
-export default function main(request: HexString, secrets: string): HexString {
+export default function main(request: HexString, settings: string): HexString {
   console.log(`handle req: ${request}`);
-  let requestId, decodedGreeting;
+  let requestId, encodedProfileId;
   try {
-    [requestId, decodedGreeting] = Coders.decode([uintCoder, bytesCoder], request);
-    console.log(`handle decodedGreeting: ${decodedGreeting}`);
+    [requestId, encodedProfileId] = Coders.decode([uintCoder, bytesCoder], request);
   } catch (error) {
     console.info("Malformed request received");
-    return encodeReply([TYPE_ERROR, 0, "ERROR"]);
+    return encodeReply([TYPE_ERROR, 0, error as string]);
   }
+  const profileId = parseProfileId(encodedProfileId as string);
+  console.log(`Request received for profile ${profileId}`);
+
   try {
-    const respData = getDrandRandomness(secrets);
-    let randomness = respData[0].randomness;
-    console.log("response:", [TYPE_RESPONSE, requestId, randomness]);
-    return encodeReply([TYPE_RESPONSE, requestId, randomness]);
+    const respData = fetchLensApiStats(settings, profileId);
+    let stats = `@stani totalFollowers: ${respData.data.profile.stats.totalFollowers}`;
+    console.log("response:", [TYPE_RESPONSE, requestId, stats]);
+    return encodeReply([TYPE_RESPONSE, requestId, stats]);
   } catch (error) {
     if (error === Error.FailedToFetchData) {
       throw error;
     } else {
       // otherwise tell client we cannot process it
       console.log("error:", [TYPE_ERROR, requestId, error]);
-      return encodeReply([TYPE_ERROR, requestId, "ERROR"]);
+      return encodeReply([TYPE_ERROR, requestId, error as string]);
     }
   }
 }
